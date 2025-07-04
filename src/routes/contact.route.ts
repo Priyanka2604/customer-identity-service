@@ -1,6 +1,13 @@
 import { Router } from 'express';
-import { identifyContact } from '../controllers/contact.controller';
+import { identify } from '../controllers/contact.controller';
 
+// Route to identify or link a contact
 const router = Router();
-router.post('/', identifyContact);
+
+// POST /identify - Identify or link a contact based on email or phone number
+// Expects JSON body with either email or phoneNumber
+// Example: { "email": "abc@gmail.com", "phoneNumber": "1234567890" }
+router.post('/identify', identify);
+
+// Export the router to be used in the main app
 export default router;
