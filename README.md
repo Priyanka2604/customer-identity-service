@@ -1,6 +1,5 @@
 # customer-identity-service
-Bitespeed Backend Task: Identity Reconciliation
-## Bitespeed Identity Resolver
+## Bitespeed Backend Task: Identity Reconciliation
 
 This service resolves and unifies customer identities using their email and/or phone number.  
 It helps Bitespeed identify returning customers across multiple purchases on FluxKart.com, even when partial contact information is available.
