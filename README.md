@@ -94,7 +94,32 @@ npx ts-node-dev src/index.ts
 
 - Ensures there is only one primary identity
 
-  
+### 🌐 Live Deployment
+The service is live on Render:
+
+🔗 https://customer-identity-service.onrender.com/identify
+
+You can test the /identify endpoint using:
+
+▶️ Postman or curl:
+```bash
+Copy
+Edit
+curl -X POST https://customer-identity-service.onrender.com/identify \
+  -H "Content-Type: application/json" \
+  -d '{"email": "new@example.com", "phoneNumber": "8888888888"}'
+```
+
+### 🔐 Environment Variables
+- .env.example is provided for reference.
+- Never push your real .env to GitHub.
+
+
+
+
+
+
+
 
 
 
