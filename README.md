@@ -17,17 +17,89 @@ This project implements the logic to:
 
 ---
 
-### ⚙️ Tech Stack
-- Node.js / Express
-- PostgreSQL
-- REST API
+## 🚀 Tech Stack
+
+- **Node.js** with **TypeScript**
+- **PostgreSQL** (relational identity graph)
+- **Express.js**
+- **Render.com** for hosting
+- **pg** PostgreSQL driver
 
 ---
 
-### 📦 Setup
+## 📦 Project Structure
+├── src/
+│ ├── controllers/
+│ ├── routes/
+│ ├── services/
+│ │ └── identity.service.ts
+│ ├── config/
+│ │ └── db.ts
+│ └── index.ts
+├── .env.example
+├── README.md
 
+### 📦 Setup & Run Locally
+
+1. Clone this repo:
 ```bash
 git clone https://github.com/priyanka2604/customer-identity-service.git
 cd customer-identity-service
+```
+
+2. Install dependencies:
+```bash
 npm install
+```
+
+3. Create a .env file:
+```env
+DATABASE_URL=postgres://username:password@localhost:5432/customer_identity
+PORT=3000
+```
+
+4. Create the contact table:
+```bash
+psql $DATABASE_URL -f migrations/create_contact_table.sql
+```
+
+5. Start the dev server:
+
+```bash
+npx ts-node-dev src/index.ts
+```
+
+### 🧪 API Endpoint: /identify
+➤ POST /identify
+```json
+{
+  "email": "george@example.com",
+  "phoneNumber": "9999999999"
+}
+```
+
+✅ Response:
+```json
+{
+  "contact": {
+    "primaryContactId": 1,
+    "emails": ["george@example.com"],
+    "phoneNumbers": ["9999999999"],
+    "secondaryContactIds": [2, 3]
+  }
+}
+```
+
+- Automatically creates and links secondary contacts based on overlapping fields
+
+- Ensures there is only one primary identity
+
+  
+
+
+
+
+
+
+
 
