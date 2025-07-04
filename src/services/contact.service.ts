@@ -1,83 +1,69 @@
+// services/contact.service.ts
+
+import { log } from 'node:console';
 import pool from '../config/db';
+import { getAllLinkedContacts, Contact } from './identity.service';
+import { console } from 'node:inspector';
 
-interface Contact {
-  id: number;
-  phoneNumber: string | null;
-  email: string | null;
-  linkedId: number | null;
-  linkPrecedence: 'primary' | 'secondary';
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-}
-
-export const identifyContact = async (email?: string, phoneNumber?: string) => {
-  if (!email && !phoneNumber) {
+export const identifyContact = async (email?: string, phonenumber?: string) => {
+  if (!email && !phonenumber) {
     throw new Error('Either email or phoneNumber is required');
   }
 
-  // Step 1: Find existing contacts
+  // Step 1: Find existing contacts with same email or phone
   const result = await pool.query<Contact>(
-    `
-    SELECT * FROM contact
-    WHERE email = $1 OR phoneNumber = $2
-    `,
-    [email, phoneNumber]
+    `SELECT * FROM contact WHERE email = $1 OR phoneNumber = $2`,
+    [email, phonenumber]
   );
 
   let contacts = result.rows;
 
   if (contacts.length === 0) {
-    // No contact found → insert new as primary
+    // No match — create new primary contact
     const insert = await pool.query<Contact>(
-      `
-      INSERT INTO contact (email, phoneNumber, linkedId, linkPrecedence)
-      VALUES ($1, $2, NULL, 'primary')
-      RETURNING *;
-      `,
-      [email, phoneNumber]
+      `INSERT INTO contact (email, phoneNumber, linkedId, linkPrecedence)
+       VALUES ($1, $2, NULL, 'primary') RETURNING *`,
+      [email, phonenumber]
     );
     contacts = [insert.rows[0]];
   } else {
-    // Contacts exist → find the earliest primary
-    const primaryContact = contacts.find(c => c.linkPrecedence === 'primary') ||
-                           contacts.find(c => c.linkedId === null);
+    // Step 2: Determine root primary ID
+    const allPrimaryIds = contacts.map(c => c.linkedId ?? c.id);
+    const primaryId = Math.min(...allPrimaryIds);
 
-    const primaryId = primaryContact?.id || contacts[0].linkedId;
-
-    // If exact email+phone not found, insert secondary
+    // Step 3: Check for exact match
+    console.log('Contacts found:', contacts);
     const exactMatch = contacts.find(
-      c => c.email === email && c.phoneNumber === phoneNumber
+      c => c.phonenumber === phonenumber && c.email === email
     );
 
     if (!exactMatch) {
-      await pool.query(
-        `
-        INSERT INTO contact (email, phoneNumber, linkedId, linkPrecedence)
-        VALUES ($1, $2, $3, 'secondary');
-        `,
-        [email, phoneNumber, primaryId]
-      );
+      const emailExists = contacts.some(c => c.email === email);
+      const phoneExists = contacts.some(c => c.phonenumber === phonenumber);
+
+      if (emailExists || phoneExists) {
+        await pool.query(
+          `INSERT INTO contact (email, phoneNumber, linkedId, linkPrecedence)
+           VALUES ($1, $2, $3, 'secondary')`,
+          [email, phonenumber, primaryId]
+        );
+
+        // Step 4: Get full related contact chain
+        contacts = await getAllLinkedContacts(primaryId);
+      }
     }
-
-    // Reload all related contacts
-    const rel = await pool.query<Contact>(
-      `
-      SELECT * FROM contact
-      WHERE id = $1 OR linkedId = $1
-      `,
-      [primaryId]
-    );
-
-    contacts = rel.rows;
   }
 
-  // Split into primary/secondary IDs
-  const primaryContact = contacts.find(c => c.linkPrecedence === 'primary')!;
+  // Step 5: Format response
+  const resolvedPrimaryId = Math.min(...contacts.map(c => c.linkedId ?? c.id));
+  const primaryContact = contacts.find(c => c.id === resolvedPrimaryId);
+
+  if (!primaryContact) throw new Error('Primary contact not found');
+
   const emails = [...new Set(contacts.map(c => c.email).filter(Boolean))];
-  const phoneNumbers = [...new Set(contacts.map(c => c.phoneNumber).filter(Boolean))];
+  const phoneNumbers = [...new Set(contacts.map(c => c.phonenumber).filter(Boolean))];
   const secondaryContactIds = contacts
-    .filter(c => c.linkPrecedence === 'secondary')
+    .filter(c => c.linkprecedence === 'secondary')
     .map(c => c.id);
 
   return {
