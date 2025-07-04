@@ -103,8 +103,6 @@ You can test the /identify endpoint using:
 
 ▶️ Postman or curl:
 ```bash
-Copy
-Edit
 curl -X POST https://customer-identity-service.onrender.com/identify \
   -H "Content-Type: application/json" \
   -d '{"email": "new@example.com", "phoneNumber": "8888888888"}'
