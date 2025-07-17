@@ -28,6 +28,7 @@ This project implements the logic to:
 ---
 
 ## 📦 Project Structure
+```
 ├── src/
 │ ├── controllers/
 │ ├── routes/
@@ -38,6 +39,7 @@ This project implements the logic to:
 │ └── index.ts
 ├── .env.example
 ├── README.md
+```
 
 ### 📦 Setup & Run Locally
 
